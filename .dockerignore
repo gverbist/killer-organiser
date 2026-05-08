@@ -1,0 +1,14 @@
+.git
+.github
+.gitignore
+.dockerignore
+.claude
+node_modules
+*.db
+*.db-shm
+*.db-wal
+*.log
+.env
+.env.*
+tests.js
+Dockerfile
