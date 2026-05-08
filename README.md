@@ -46,7 +46,30 @@ This app handles the bookkeeping: target assignment, kill confirmation, the inev
 
 ## Quick start
 
-### Docker (recommended)
+### Docker Compose (recommended)
+
+The repo ships with a `docker-compose.yml` and `.env.example`:
+
+```bash
+git clone https://github.com/gverbist/killer-organiser.git
+cd killer-organiser
+cp .env.example .env
+# Generate a session secret and put it in .env:
+echo "SESSION_SECRET=$(openssl rand -hex 32)" >> .env
+docker compose up -d
+```
+
+Then open:
+- GM panel: <http://localhost:3000/gm>
+- Player portal: <http://localhost:3000/>
+
+To wipe state and start over: `docker compose down -v`.
+
+The compose file also has a commented-out **nginx reverse proxy** service block — uncomment it (and provide your own `nginx.conf` + TLS certs in `./nginx/`) to terminate HTTPS in front of the app.
+
+### Plain `docker run`
+
+If you'd rather not use compose:
 
 ```bash
 docker run -d \
@@ -56,10 +79,6 @@ docker run -d \
   -e SESSION_SECRET="$(openssl rand -hex 32)" \
   ghcr.io/gverbist/killer-organiser:latest
 ```
-
-Then open:
-- GM panel: <http://localhost:3000/gm>
-- Player portal: <http://localhost:3000/>
 
 The named volume `killer-data` keeps the SQLite database across restarts.
 
@@ -286,6 +305,8 @@ All POST/PUT/DELETE bodies are JSON. GM endpoints require a session cookie set b
 │   ├── player.js          # Player portal logic
 │   └── style.css          # Mobile-first dark theme
 ├── Dockerfile             # Multi-stage on node:22-bookworm-slim, runs as uid 10001
+├── docker-compose.yml     # Pinned-version deploy with named volume; commented nginx proxy stub
+├── .env.example           # Template for SESSION_SECRET (.env itself is gitignored)
 ├── .dockerignore
 └── .github/workflows/
     └── release.yml        # Test + multi-arch build & push to GHCR
