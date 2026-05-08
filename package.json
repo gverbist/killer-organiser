@@ -4,7 +4,8 @@
   "description": "Killer Organiser — game management for the live-action assassination game",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node tests.js"
   },
   "type": "commonjs",
   "dependencies": {
