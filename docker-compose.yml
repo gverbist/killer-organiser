@@ -1,0 +1,41 @@
+services:
+  killer:
+    image: ghcr.io/gverbist/killer-organiser:1.0.0
+    container_name: killer-organiser
+    restart: unless-stopped
+    # If you enable the nginx service below, you typically don't expose the
+    # app port directly to the host — replace this `ports:` block with
+    #   expose:
+    #     - "3000"
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      # Generate one with:  openssl rand -hex 32
+      # Set it in a .env file next to this compose file (see .env.example).
+      SESSION_SECRET: ${SESSION_SECRET:?SESSION_SECRET is required}
+    volumes:
+      - killer-data:/data
+
+  # ─── nginx reverse proxy with TLS (optional) ──────────────────────────
+  # Uncomment to terminate HTTPS in front of the app.
+  #
+  # You also need to provide:
+  #   ./nginx/nginx.conf                   — your reverse proxy config
+  #   ./nginx/certs/fullchain.pem          — TLS cert (e.g. from Let's Encrypt)
+  #   ./nginx/certs/privkey.pem            — TLS private key
+  #
+  # nginx:
+  #   image: nginx:1.27-alpine
+  #   container_name: killer-nginx
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - killer
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/certs:/etc/nginx/certs:ro
+
+volumes:
+  killer-data:
