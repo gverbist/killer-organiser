@@ -78,16 +78,137 @@ No build step. The SQLite database is created on first run at `./killer.db`.
 
 ---
 
-## How a game runs
+## How to use
 
-1. **GM** opens `/gm`, fills in *Game name*, optional *Kill method*, and a *GM password* — clicks **Create game**.
-2. **GM** adds players (single or bulk paste) and clicks **Start game**.
-3. The app generates a secret cycle (everyone targets exactly one person) and a unique 4-digit PIN per player. The GM hands out (or prints) the PIN sheet.
-4. **Players** open `/`, enter their PIN, and see only their own target.
-5. When a player makes a kill in real life, they hit **I made a kill**. This raises a flag in the GM panel.
-6. **GM** verifies and clicks **Confirm claim** on that player's row — the target is eliminated, the killer inherits the next target in the chain, kill count increments.
-7. Optional: GM can **Dismiss** a false claim, **Reassign** a target after a dispute, or **Undo** the last kill if something went wrong.
-8. When only one player remains, the game ends automatically and shows the winner. GM can **Reset / New game** any time.
+The app has two views, each meant for a different person and a different device:
+
+- **`/gm`** — Game Master. One person runs this on whatever device they have handy (laptop is easiest, phone works too).
+- **`/`** — Player portal. Every participant opens this on their own phone.
+
+Players and the GM all hit the same server. If you're hosting locally, share your machine's LAN IP (e.g. `http://192.168.1.42:3000/`) so phones on the same Wi-Fi can connect. For remote play, put it behind a reverse proxy (Caddy, nginx, Cloudflare Tunnel — anything that gives you HTTPS).
+
+### For the Game Master
+
+#### 1. Create the game
+
+Open `/gm`. On first run you'll see a simple form:
+
+- **Game name** — anything ("Office Killers Spring 2026", "Camp Murder").
+- **Kill method** *(optional)* — the agreed weapon, e.g. *"sticker on the back"*, *"water gun"*, *"point and say BANG"*. Players see this in their portal as a reminder.
+- **GM password** — at least 4 characters. You'll need it to log back in if your session expires or you switch devices.
+
+Click **Create game**. You're now in the **Setup** view.
+
+#### 2. Add players
+
+Two ways:
+
+- **Single player** — type a name, hit *Add* (or press Enter).
+- **Bulk paste** — paste a newline-separated list, hit *Add all*. Empty lines are ignored.
+
+Use real first names (or distinctive nicknames) — players will see their *target's first name only*, so make sure each first name is unique enough to identify someone in the crowd. If you have two Sarahs, add them as "Sarah K" and "Sarah M".
+
+You can **Remove** players at any point during setup. After the game starts, the player list is locked.
+
+#### 3. Start the game
+
+Click **Start game** when you have at least 2 players. The app then:
+
+- Shuffles everyone into a random secret circle (A → B → C → … → A).
+- Generates a unique random 4-digit **PIN** per player.
+- Switches the panel into **Live game** mode.
+
+#### 4. Hand out PINs
+
+The GM panel now shows a **PINs** card with everyone's name and PIN. Two ways to distribute:
+
+- **Print** — click *Print* (top-right of the PIN card). The page is styled for clean black-and-white printing. Cut into strips and hand them out.
+- **Share digitally** — read PINs out one at a time, or screenshot and send privately. Don't post the whole list publicly: the PIN is the only thing protecting a player's target.
+
+#### 5. Run the game
+
+While the game runs, the **Players** card shows everyone live with:
+
+- Status badge (alive / dead)
+- Their current target's name (so *you* can see the chain — players only see first names)
+- Kill count
+- "Claims a kill" badge whenever a player taps **I made a kill** in their portal
+
+You'll mostly do one thing during play: **confirm kills**. The button label adapts to the situation:
+
+| Situation | Button | What it does |
+|---|---|---|
+| Player has tapped *I made a kill* | **Confirm claim** | Eliminates that player's *target*; killer inherits next target. |
+| You witnessed a kill (no claim) | **Confirm kill** (on the *eliminated player's* row) | Same thing: eliminates that player; whoever was hunting them inherits the next target. |
+
+Two confirmation steps are always required (tap → "Yes, eliminate X?") so you don't kill someone by mistake.
+
+Other actions:
+
+- **Dismiss claim** — clears a false-alarm claim without killing anyone. Use when a player accidentally tapped the button.
+- **Reassign** — manually change a player's target. Useful when a player has gone permanently offline / dropped out / a dispute requires it. The dropdown only shows alive players.
+- **Undo last kill** — fully reverses the most recent confirmed kill: victim back to alive, killer's target restored, kill count decremented, and if the game had ended, it goes back to active. Only the *very last* kill can be undone (one level deep).
+- **Reset game** *(top-right)* — archives the current run and starts the create-game flow over. The form has a Cancel button and your typed input is preserved while you fill it in.
+
+#### 6. End of game
+
+When only one player is left alive, the panel automatically switches to the **Game over** view with a winner banner and the final leaderboard sorted by kill count. Click **Reset / New game** to archive this run and start fresh.
+
+#### Common situations
+
+- **A player loses their PIN** — click *Print* again, or look at the PIN card on your panel and tell them their PIN privately.
+- **A dispute about whether a kill counts** — if you decide the kill stands, just confirm. If it doesn't, **Dismiss** the claim and let play continue.
+- **Two players claim a kill on the same target simultaneously** — only one can really be right (only one person targets any given victim). Check the panel to see who's currently targeting whom, dismiss the wrong claim.
+- **A player drops out mid-game** — **Reassign** the target of whoever was hunting them to skip past the dropped player. Then **Reassign** the dropped player out of the chain too if you want them entirely removed.
+- **You restart the server** — your game state is preserved (it's all in SQLite). But your session cookie is gone, so log back in with the GM password. Players' PINs still work.
+
+### For players
+
+#### 1. Open the portal
+
+Go to whatever URL the GM gave you (e.g. `http://192.168.1.42:3000/`). You'll see a single field asking for your 4-digit PIN.
+
+#### 2. Enter your PIN
+
+Type the PIN your GM gave you. Hit **Enter**. Your phone remembers it (`localStorage`), so you can close the tab and come back without re-entering.
+
+#### 3. Hunt your target
+
+You'll see:
+
+- Your name (just to confirm the right person logged in)
+- **Your target** — the first name of who you're hunting
+- The agreed kill method
+- Your kill count
+
+Go find your target and "kill" them with whatever method the group agreed on.
+
+#### 4. Claim the kill
+
+Hit **I made a kill** and confirm. The screen now says *"Kill claim sent. Waiting for the GM to confirm…"*.
+
+The GM will verify and either:
+
+- **Confirm** the kill — your screen will refresh to show your **new target** (the one your victim was hunting), and your kill count goes up.
+- **Dismiss** the claim — back to the same target, no change to kills.
+
+The portal auto-refreshes every 15 seconds (and immediately whenever you open the tab), so you'll see the new target without doing anything.
+
+#### 5. If you get killed
+
+You'll see *"☠ Eliminated"* with your final kill count. You're out — but stick around to watch the carnage.
+
+#### 6. If you win
+
+Outlast everyone and you'll see *"🏆 You won!"*. Glory awaits.
+
+#### Notes for players
+
+- **Don't share your target name.** That's the whole game. Even a casual mention can give it away.
+- **Your target is shown by first name only.** If two players share a first name, the GM should have added them with a distinguishing surname — ask the GM if you're unsure who you're after.
+- **You can only claim a kill on your current target.** The button doesn't ask who you killed because it's always the person shown on screen.
+- **Closed the tab? Tab crashed?** Just reopen the URL — your PIN is remembered.
+- **Want to log out?** Tap *Sign out* on your portal. You'll need your PIN again to log back in.
 
 ---
 
