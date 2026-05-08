@@ -331,8 +331,6 @@ git push origin v1.0.0
 
 ## Acknowledgements
 
-This project was developed collaboratively with **Claude** (Anthropic's Claude Opus 4.7) using **Claude Code**. The conversation followed a single comprehensive product spec and iterated on UX bugs, feature additions, the test suite, and the deployment pipeline — each step driven by a short prompt and reviewed before commit.
-
 The original game *Killer* was published by Steve Jackson Games in 1981. This tool has no affiliation with them; it just makes their game easier to run.
 
 ---
