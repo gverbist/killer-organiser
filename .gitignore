@@ -1,0 +1,25 @@
+node_modules/
+package-lock.json.bak
+
+# SQLite databases
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# Local environment
+.env
+.env.local
+
+# Tooling caches
+.claude/
